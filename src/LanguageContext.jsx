@@ -4,9 +4,8 @@ const LanguageContext = createContext();
 
 // Base English dictionary
 const enDict = {
-  'nav.products': 'Products',
+  'nav.products': 'Our Products',
   'nav.about': 'Our Story',
-  'nav.range': 'Our Range',
   'nav.results': 'Success Stories',
   'nav.rnd': 'Innovation Lab',
   'nav.updates': 'Latest Updates',
