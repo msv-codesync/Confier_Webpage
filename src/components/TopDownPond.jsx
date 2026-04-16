@@ -396,14 +396,14 @@ export default function TopDownPond() {
     }
 
     // Grain/noise overlay for a more realistic water surface
-    const grainCount = Math.min(900, Math.max(260, Math.floor((width * height) / 1400)));
+    const grainCount = Math.min(700, Math.max(220, Math.floor((width * height) / 1800)));
     const grain = [];
     for (let i = 0; i < grainCount; i++) {
       grain.push({
         x: Math.random() * width,
         y: Math.random() * height,
         r: Math.random() * 0.9 + 0.25,
-        a: Math.random() * 0.07 + 0.03
+        a: Math.random() * 0.04 + 0.015
       });
     }
 
@@ -413,38 +413,60 @@ export default function TopDownPond() {
       time += 1;
       ctx.clearRect(0, 0, width, height);
 
-      // Unified pond water color (lighter bluish, no “separated” layers)
+      // Calm logo-matching teal to blue base
       const waterGrad = ctx.createLinearGradient(0, 0, 0, height);
-      waterGrad.addColorStop(0, '#77e2f0');      // Surface (more vibrant)
-      waterGrad.addColorStop(0.55, '#2aa6c0');   // Mid-water
-      waterGrad.addColorStop(1, '#0b4b63');      // Deeper water
+      waterGrad.addColorStop(0, '#4fa8b8');
+      waterGrad.addColorStop(0.32, '#2c8a9f');
+      waterGrad.addColorStop(0.68, '#0f6d82');
+      waterGrad.addColorStop(1, '#0a4f61');
       ctx.fillStyle = waterGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // Gentle bottom haze (keeps water realistic without “blocks”)
-      ctx.fillStyle = 'rgba(6, 43, 56, 0.14)';
-      ctx.fillRect(0, height * 0.78, width, height * 0.22);
+      // Soft upper-water glow for calm depth
+      const surfaceGlow = ctx.createLinearGradient(0, 0, 0, height * 0.45);
+      surfaceGlow.addColorStop(0, 'rgba(180, 235, 240, 0.14)');
+      surfaceGlow.addColorStop(1, 'rgba(180, 235, 240, 0)');
+      ctx.fillStyle = surfaceGlow;
+      ctx.fillRect(0, 0, width, height * 0.45);
 
-      // Grain overlay
+      // Mid-water veil to create natural layered depth
+      const midVeil = ctx.createLinearGradient(0, height * 0.2, 0, height * 0.9);
+      midVeil.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      midVeil.addColorStop(0.45, 'rgba(18, 84, 101, 0.05)');
+      midVeil.addColorStop(1, 'rgba(6, 43, 56, 0.12)');
+      ctx.fillStyle = midVeil;
+      ctx.fillRect(0, 0, width, height);
+
+      // Gentle bottom haze without visible separation
+      const lowerDepth = ctx.createLinearGradient(0, height * 0.7, 0, height);
+      lowerDepth.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      lowerDepth.addColorStop(1, 'rgba(6, 43, 56, 0.16)');
+      ctx.fillStyle = lowerDepth;
+      ctx.fillRect(0, height * 0.7, width, height * 0.3);
+
+      // Very light grain overlay
       for (let i = 0; i < grain.length; i++) {
         const g = grain[i];
-        const wobble = Math.sin(time * 0.01 + g.x * 0.01) * 0.25;
+        const wobble = Math.sin(time * 0.01 + g.x * 0.01) * 0.18;
         ctx.globalAlpha = g.a;
         ctx.fillStyle = 'rgba(255, 255, 255, 1)';
         ctx.fillRect(g.x, g.y + wobble, g.r, g.r);
       }
       ctx.globalAlpha = 1;
 
-      // Very subtle ripple strokes (reduced to avoid “broken” look)
-      ctx.strokeStyle = `rgba(140, 220, 230, ${0.02 + Math.sin(time * 0.008) * 0.01})`;
-      ctx.lineWidth = 0.45;
-      ctx.beginPath();
-      for (let x = 0; x < width + 40; x += 55) {
-        const y = height * 0.38 + Math.sin((x + time * 0.6) * 0.009) * 3.5;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      // Soft water layer lines for realistic pond feel
+      ctx.strokeStyle = `rgba(165, 230, 235, ${0.018 + Math.sin(time * 0.008) * 0.006})`;
+      ctx.lineWidth = 0.5;
+      for (let layer = 0; layer < 2; layer++) {
+        const baseY = height * (0.3 + layer * 0.18);
+        ctx.beginPath();
+        for (let x = 0; x < width + 50; x += 60) {
+          const y = baseY + Math.sin((x + time * (0.55 + layer * 0.08)) * 0.008 + layer) * (2.5 + layer);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
 
       // Floating particles (algae/debris)
       particles.forEach(p => {
@@ -453,7 +475,7 @@ export default function TopDownPond() {
         
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(105, 190, 185, ${p.opacity * 0.75})`;
+        ctx.fillStyle = `rgba(120, 195, 188, ${p.opacity * 0.55})`;
         ctx.fill();
       });
 
