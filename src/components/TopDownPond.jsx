@@ -54,24 +54,41 @@ export default function TopDownPond() {
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        // Scales based on screen width
-        this.size = (Math.random() * 25 + 40) * scaleFactor; 
-        this.baseSpeed = Math.random() * 0.3 + 0.2; // Smooth, slow, chill drifting when alone
-        this.currentSpeedMultiplier = 1; // Used for smooth organic acceleration
+        this.size = (Math.random() * 25 + 40) * scaleFactor;
+        this.baseSpeed = Math.random() * 0.3 + 0.2;
+        this.currentSpeedMultiplier = 1;
         this.speedX = (Math.random() - 0.5) * this.baseSpeed;
         this.speedY = (Math.random() - 0.5) * this.baseSpeed;
         this.angle = Math.atan2(this.speedY, this.speedX);
         
         this.swimCycle = Math.random() * Math.PI * 2;
         this.targetAngle = this.angle;
+        
+        // Assign pattern type (7-8 variants)
+        this.patternType = Math.floor(Math.random() * 8);
+      }
+
+      // Define colors based on pattern type - subtle variations
+      getColors() {
+        const patterns = [
+          // All variants use same tan/brown base with subtle shifts
+          { main: '#d4a574', dark: '#c9956f', light: '#d9b089', leg: 'rgba(212, 165, 116, 0.4)' },
+          { main: '#d0a070', dark: '#c89568', light: '#d9b089', leg: 'rgba(208, 160, 112, 0.4)' },
+          { main: '#d8aa7c', dark: '#cb9d6f', light: '#e0b89a', leg: 'rgba(216, 170, 124, 0.4)' },
+          { main: '#cc9d68', dark: '#bf8f5f', light: '#dab088', leg: 'rgba(204, 157, 104, 0.4)' },
+          { main: '#d5a178', dark: '#c89a6f', light: '#dfb394', leg: 'rgba(213, 161, 120, 0.4)' },
+          { main: '#d2a075', dark: '#c59867', light: '#dcb192', leg: 'rgba(210, 160, 117, 0.4)' },
+          { main: '#cfa070', dark: '#c39862', light: '#d9b089', leg: 'rgba(207, 160, 112, 0.4)' },
+          { main: '#d6a57a', dark: '#c99d70', light: '#dfb59a', leg: 'rgba(214, 165, 122, 0.4)' }
+        ];
+        return patterns[this.patternType];
       }
 
       update() {
-        // Base tail movement linked to actual current speed
         this.swimCycle += 0.08 * (this.baseSpeed * this.currentSpeedMultiplier);
 
         if (Math.random() < 0.015) {
-          this.targetAngle += (Math.random() - 0.5) * 1.2; // Gentle roaming turns
+          this.targetAngle += (Math.random() - 0.5) * 1.2;
         }
 
         const dx = mouse.x - this.x;
@@ -82,18 +99,17 @@ export default function TopDownPond() {
 
         if (distance < mouse.radius) {
           const force = (mouse.radius - distance) / mouse.radius;
-          const fleeAngle = Math.atan2(dy, dx) + Math.PI; 
+          const fleeAngle = Math.atan2(dy, dx) + Math.PI;
           
           this.targetAngle = fleeAngle;
-          targetSpeedMultiplier = 1 + (force * 15); // Explosive fast movement when mouse is near!
-          this.swimCycle += 0.3 * force; // Frantic tail flicking
+          targetSpeedMultiplier = 1 + (force * 15);
+          this.swimCycle += 0.3 * force;
         }
 
-        // Extremely smooth organic acceleration / deceleration physics
         this.currentSpeedMultiplier += (targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.04;
 
         const diff = this.targetAngle - this.angle;
-        this.angle += Math.atan2(Math.sin(diff), Math.cos(diff)) * 0.06; // Smooth rotation
+        this.angle += Math.atan2(Math.sin(diff), Math.cos(diff)) * 0.06;
 
         this.speedX = Math.cos(this.angle) * this.baseSpeed * this.currentSpeedMultiplier;
         this.speedY = Math.sin(this.angle) * this.baseSpeed * this.currentSpeedMultiplier;
@@ -113,179 +129,243 @@ export default function TopDownPond() {
         ctx.rotate(this.angle);
 
         const sz = this.size;
-        const tailBeat = Math.sin(this.swimCycle) * 0.3; // Angle of tail bend
-
-        // High detail, NO shadows to maintain 60fps
-        const mainOrange = '#eb6434';
-        const darkOrange = '#cc4c23';
-        const lightOrange = '#f7885e';
-        const legColor = 'rgba(235, 100, 52, 0.6)';
+        const tailBeat = Math.sin(this.swimCycle) * 0.3;
+        const colors = this.getColors();
+        const { main, dark, light, leg } = colors;
 
         // Vector 1: Double Pair of Sweeping Antennae
         ctx.beginPath();
-        // Front-sweeping sensory antennae
         ctx.moveTo(sz * 0.4, -sz * 0.1);
         ctx.quadraticCurveTo(sz * 1.0, -sz * 0.5, sz * 1.2, -sz * 0.2);
         ctx.moveTo(sz * 0.4, sz * 0.1);
         ctx.quadraticCurveTo(sz * 1.0, sz * 0.5, sz * 1.2, sz * 0.2);
-        // Extremely long backwards-sweeping primary antennae
         ctx.moveTo(sz * 0.4, -sz * 0.05);
         ctx.bezierCurveTo(sz * 0.8, -sz * 0.8, 0, -sz * 1.2, -sz * 1.5, -sz * 0.9);
         ctx.moveTo(sz * 0.4, sz * 0.05);
         ctx.bezierCurveTo(sz * 0.8, sz * 0.8, 0, sz * 1.2, -sz * 1.5, sz * 0.9);
-        ctx.strokeStyle = 'rgba(255, 180, 150, 0.7)';
+        ctx.strokeStyle = `rgba(212, 165, 116, 0.6)`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Vector 2: Front Walking Legs (Pereiopods) - projecting from under the carapace
+        // Vector 2: Front Walking Legs
         ctx.beginPath();
         for(let j=0; j<3; j++) {
             let offset = sz * 0.1 * j;
-            // Left legs
             ctx.moveTo(sz * 0.3 - offset, -sz * 0.15);
             ctx.lineTo(sz * 0.4 - offset, -sz * 0.4);
             ctx.lineTo(sz * 0.3 - offset, -sz * 0.5);
-            // Right legs
             ctx.moveTo(sz * 0.3 - offset, sz * 0.15);
             ctx.lineTo(sz * 0.4 - offset, sz * 0.4);
             ctx.lineTo(sz * 0.3 - offset, sz * 0.5);
         }
-        ctx.strokeStyle = legColor;
+        ctx.strokeStyle = leg;
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Vector 3: Carapace (Tapered Head Shield)
+        // Vector 3: Carapace
         ctx.beginPath();
-        ctx.moveTo(sz * 0.5, 0); // Sharp rostrum (nose)
-        ctx.lineTo(sz * 0.3, -sz * 0.2); // Flairs out to eyes
-        ctx.lineTo(0, -sz * 0.22); // Widest at back of head
-        ctx.lineTo(0, sz * 0.22); 
-        ctx.lineTo(sz * 0.3, sz * 0.2); 
+        ctx.moveTo(sz * 0.5, 0);
+        ctx.lineTo(sz * 0.3, -sz * 0.2);
+        ctx.lineTo(0, -sz * 0.22);
+        ctx.lineTo(0, sz * 0.22);
+        ctx.lineTo(sz * 0.3, sz * 0.2);
         ctx.closePath();
-        // Fast local gradient for 3D sheen (zero lag)
+        
+        // Create softer, matte gradient based on pattern type
         let bodyGrad = ctx.createLinearGradient(0, -sz * 0.2, 0, sz * 0.2);
-        bodyGrad.addColorStop(0, darkOrange);
-        bodyGrad.addColorStop(0.5, lightOrange);
-        bodyGrad.addColorStop(1, darkOrange);
+        if (this.patternType % 3 === 0) {
+          // Striped pattern - softer, less metallic
+          bodyGrad.addColorStop(0, dark);
+          bodyGrad.addColorStop(0.35, main);
+          bodyGrad.addColorStop(0.5, main);
+          bodyGrad.addColorStop(0.65, main);
+          bodyGrad.addColorStop(1, dark);
+        } else if (this.patternType % 3 === 1) {
+          // Mottled pattern - softer
+          bodyGrad.addColorStop(0, main);
+          bodyGrad.addColorStop(0.4, dark);
+          bodyGrad.addColorStop(0.6, main);
+          bodyGrad.addColorStop(1, main);
+        } else {
+          // Matte gradient (no strong shine)
+          bodyGrad.addColorStop(0, dark);
+          bodyGrad.addColorStop(0.5, main);
+          bodyGrad.addColorStop(1, dark);
+        }
+        
         ctx.fillStyle = bodyGrad;
-        ctx.strokeStyle = darkOrange;
+        ctx.strokeStyle = dark;
         ctx.lineWidth = 1;
         ctx.fill();
         ctx.stroke();
 
-        // White speckles on the carapace
+        // White speckles on carapace
         ctx.beginPath();
         ctx.arc(sz * 0.2, -sz * 0.1, sz * 0.02, 0, Math.PI * 2);
         ctx.arc(sz * 0.1, -sz * 0.12, sz * 0.03, 0, Math.PI * 2);
         ctx.arc(sz * 0.15, sz * 0.08, sz * 0.025, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.fill();
 
-        // Vector 4: Stalk Eyes pointing outward
+        // Vector 4: Eyes
         ctx.beginPath();
         ctx.arc(sz * 0.4, -sz * 0.15, sz * 0.06, 0, Math.PI * 2);
         ctx.arc(sz * 0.4, sz * 0.15, sz * 0.06, 0, Math.PI * 2);
-        ctx.fillStyle = '#111';
+        ctx.fillStyle = '#1a1410';
         ctx.fill();
-        // Tiny white eye glints
         ctx.beginPath();
         ctx.arc(sz * 0.42, -sz * 0.17, sz * 0.015, 0, Math.PI * 2);
         ctx.arc(sz * 0.42, sz * 0.13, sz * 0.015, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
         ctx.fill();
 
-        // Vector 5: Segmented Abdomen (Scale plates bending down the tail)
+        // Vector 5: Segmented Abdomen with pattern variations
         ctx.save();
-        ctx.translate(0, 0); // Start at back of carapace
+        ctx.translate(0, 0);
         
         for (let i = 0; i < 5; i++) {
           ctx.beginPath();
-          // Segments get smaller and narrower
           let segWidth = sz * 0.2;
           let segHeight = sz * 0.2 - (i * sz * 0.025);
           
           ctx.translate(-sz * 0.15, 0);
-          ctx.rotate(tailBeat * 0.2); // Bend recursively 
+          ctx.rotate(tailBeat * 0.2);
           
-          // Draw overlapping curved armor plate
+          // Draw segment with matte pattern-specific coloring
+          let segGrad = ctx.createLinearGradient(0, -segHeight, 0, segHeight);
+          if (this.patternType % 3 === 0) {
+            // Alternating stripes - matte
+            if (i % 2 === 0) {
+              segGrad.addColorStop(0, dark);
+              segGrad.addColorStop(0.5, dark);
+              segGrad.addColorStop(1, dark);
+            } else {
+              segGrad.addColorStop(0, main);
+              segGrad.addColorStop(0.5, main);
+              segGrad.addColorStop(1, main);
+            }
+          } else {
+            segGrad.addColorStop(0, dark);
+            segGrad.addColorStop(0.5, main);
+            segGrad.addColorStop(1, dark);
+          }
+          
           ctx.ellipse(0, 0, segWidth, segHeight, 0, 0, Math.PI * 2);
-          ctx.fillStyle = bodyGrad; // Reuse the gradient
+          ctx.fillStyle = segGrad;
           ctx.fill();
+          ctx.strokeStyle = dark;
+          ctx.lineWidth = 0.8;
           ctx.stroke();
 
-          // Swimmerets (Pleopods) under the tail
+          // Swimmerets
           if(i < 4) {
              ctx.beginPath();
              ctx.moveTo(0, -segHeight * 0.8);
              ctx.lineTo(-sz * 0.1, -segHeight * 1.4);
              ctx.moveTo(0, segHeight * 0.8);
              ctx.lineTo(-sz * 0.1, segHeight * 1.4);
-             ctx.strokeStyle = legColor;
+             ctx.strokeStyle = leg;
              ctx.lineWidth = 1.5;
              ctx.stroke();
           }
 
-          // Singular bright white dot per segment
+          // White dots per segment
           if (i % 2 === 0) {
             ctx.beginPath();
             ctx.arc(0, segHeight * 0.5, sz * 0.02, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
             ctx.fill();
           }
         }
 
-        // Vector 6: Uropod & Telson (Detailed 3-part Tail Fan)
+        // Vector 6: Tail Fan
         ctx.beginPath();
-        // Central spike (telson)
         ctx.moveTo(-sz * 0.1, 0);
         ctx.lineTo(-sz * 0.4, 0);
         
-        // Left fan (uropod)
         ctx.moveTo(-sz * 0.1, -sz * 0.05);
         ctx.quadraticCurveTo(-sz * 0.4, -sz * 0.3, -sz * 0.5, -sz * 0.2);
         ctx.lineTo(-sz * 0.1, 0);
         
-        // Right fan (uropod)
         ctx.moveTo(-sz * 0.1, sz * 0.05);
         ctx.quadraticCurveTo(-sz * 0.4, sz * 0.3, -sz * 0.5, sz * 0.2);
         ctx.lineTo(-sz * 0.1, 0);
         
-        ctx.fillStyle = lightOrange;
+        ctx.fillStyle = main;
         ctx.fill();
-        ctx.strokeStyle = darkOrange;
+        ctx.strokeStyle = dark;
         ctx.stroke();
 
-        ctx.restore(); // Undo recursive tail bend
-        ctx.restore(); // Undo full shrimp translation/rotation
+        ctx.restore();
+        ctx.restore();
       }
     }
 
-    const shrimpCount = isMobile ? 12 : 26;
+    const shrimpCount = isMobile ? 20 : 38;
     const shrimpFlock = [];
     for (let i = 0; i < shrimpCount; i++) { 
       shrimpFlock.push(new Shrimp());
     }
 
+    // Particle system for realistic pond effects
+    const particles = [];
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 0.8 + 0.3,
+        opacity: Math.random() * 0.4 + 0.1,
+        speed: Math.random() * 0.05 + 0.02
+      });
+    }
+
     let rafId;
+    let time = 0;
     const animate = () => {
+      time += 1;
       ctx.clearRect(0, 0, width, height);
 
-      const bg = ctx.createLinearGradient(0, 0, width, height);
-      bg.addColorStop(0, '#0b617a');
-      bg.addColorStop(1, '#032533');
-      ctx.fillStyle = bg;
+      // Unified pond water color with subtle depth
+      const waterGrad = ctx.createLinearGradient(0, 0, 0, height);
+      waterGrad.addColorStop(0, '#1a6d7e');      // Water surface
+      waterGrad.addColorStop(0.6, '#156a78');    // Mid-water  
+      waterGrad.addColorStop(1, '#0d4a56');      // Deeper water
+      ctx.fillStyle = waterGrad;
       ctx.fillRect(0, 0, width, height);
 
-      for (let r = 0; r < 5; r++) {
-         ctx.beginPath();
-         ctx.moveTo(width * 0.2 * r, -100);
-         ctx.lineTo(width * 0.3 * (r+1), height + 100);
-         ctx.lineTo(width * 0.4 * (r+1), height + 100);
-         ctx.lineTo(width * 0.3 * r, -100);
-         ctx.fillStyle = 'rgba(148,210,189, 0.015)';
-         ctx.fill();
+      // Subtle sand texture at bottom (reduced opacity for unity)
+      ctx.fillStyle = 'rgba(180, 160, 130, 0.12)';
+      ctx.fillRect(0, height * 0.82, width, height * 0.18);
+
+      // Subtle animated ripple effect for realism
+      ctx.strokeStyle = `rgba(100, 160, 180, ${0.06 + Math.sin(time * 0.008) * 0.03})`;
+      ctx.lineWidth = 0.8;
+      for (let wave = 0; wave < 2; wave++) {
+        ctx.beginPath();
+        for (let x = 0; x < width + 50; x += 40) {
+          const y = height * 0.35 + Math.sin((x + time * 0.5) * 0.008 + wave * 1.5) * 6;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       }
 
+      // Subtle depth overlay (smooth transition, not separated)
+      ctx.fillStyle = `rgba(5, 25, 40, ${0.04 + Math.sin(time * 0.01) * 0.015})`;
+      ctx.fillRect(0, height * 0.75, width, height * 0.25);
+
+      // Floating particles (algae/debris)
+      particles.forEach(p => {
+        p.y -= p.speed * Math.cos(time * 0.005 + p.x * 0.01);
+        if (p.y < -20) p.y = height + 20;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(140, 165, 155, ${p.opacity})`;
+        ctx.fill();
+      });
+
+      // Update and draw shrimp
       shrimpFlock.forEach(shrimp => {
         shrimp.update();
         shrimp.draw();

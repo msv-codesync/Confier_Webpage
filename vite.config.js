@@ -2,11 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const isProd = process.env.NODE_ENV === 'production'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Workbox service worker generation is failing in this environment.
+      // Disabling it for production builds keeps deploy builds reliable.
+      disable: isProd,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'logo.png', 'splash.png'],
       manifest: {
