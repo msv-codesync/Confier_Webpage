@@ -57,7 +57,7 @@ export default function AuthModal({ isOpen, onClose }) {
       
       <div style={{
         background: '#fff', width: '100%', maxWidth: '400px', borderRadius: 'var(--radius-lg)',
-        padding: '2rem', boxShadow: 'var(--shadow-lg)', position: 'relative'
+        padding: 'clamp(1.5rem, 5vw, 2rem)', boxShadow: 'var(--shadow-lg)', position: 'relative'
       }} onClick={e => e.stopPropagation()}>
         
         <button

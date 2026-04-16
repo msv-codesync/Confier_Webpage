@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User } from 'lucide-react';
+import { Menu, X, LogOut, User, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.jsx';
 import { useAuth } from '../AuthContext';
+import { useCart } from '../CartContext.jsx';
 import AuthModal from './AuthModal';
+import Checkout from './Checkout.jsx';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { t } = useLanguage();
   const { user, logOut } = useAuth();
+  const { cartItems } = useCart();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -27,13 +31,14 @@ export default function Header() {
   ];
 
   return (
-    <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0,
-      background: scrolled ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.9)',
-      backdropFilter: 'blur(12px)', zIndex: 50,
-      borderBottom: scrolled ? '1px solid var(--clr-border)' : '1px solid transparent',
-      transition: 'all 0.3s ease',
-      padding: '0.8rem 0'
+    <>
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        background: scrolled ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.9)',
+        backdropFilter: 'blur(12px)', zIndex: 50,
+        borderBottom: scrolled ? '1px solid var(--clr-border)' : '1px solid transparent',
+        transition: 'all 0.3s ease',
+        padding: '0.8rem 0'
     }}>
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         
@@ -142,13 +147,37 @@ export default function Header() {
           </div>
         </div>
 
-        {/* MOBILE MENU TOGGLE */}
-        <button 
-          className="mobile-toggle"
-          onClick={() => setMobileOpen(!mobileOpen)} 
-          style={{ background: 'none', border: 'none', color: 'var(--clr-text-main)' }}>
-          {mobileOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+        {/* MOBILE MENU TOGGLE + CART */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => setCheckoutOpen(true)}
+            style={{ 
+              background: cartItems.length > 0 ? 'var(--clr-orange-warm)' : 'var(--clr-teal-light)',
+              border: 'none', color: cartItems.length > 0 ? '#fff' : 'var(--clr-teal-dark)',
+              borderRadius: '8px', padding: '0.5rem 1rem',
+              cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem',
+              position: 'relative'
+            }}
+          >
+            <ShoppingCart size={20} />
+            {cartItems.length > 0 && (
+              <span style={{
+                position: 'absolute', top: '-8px', right: '-8px', background: '#d32f2f',
+                color: '#fff', borderRadius: '50%', width: '24px', height: '24px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.75rem', fontWeight: 700
+              }}>
+                {cartItems.length}
+              </span>
+            )}
+          </button>
+          <button 
+            className="mobile-toggle"
+            onClick={() => setMobileOpen(!mobileOpen)} 
+            style={{ background: 'none', border: 'none', color: 'var(--clr-text-main)' }}>
+            {mobileOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
       </div>
 
       {/* MOBILE NAV DROPDOWN */}
@@ -223,6 +252,10 @@ export default function Header() {
           .mobile-toggle { display: none !important; }
         }
       `}</style>
-    </nav>
+      </nav>
+
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <Checkout isOpen={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+    </>
   );
 }

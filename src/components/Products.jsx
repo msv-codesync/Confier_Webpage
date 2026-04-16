@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, X, CheckCircle2 } from 'lucide-react';
+import { Box, X, CheckCircle2, ShoppingCart, Heart } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.jsx';
+import { useCart } from '../CartContext.jsx';
 
 export const products = [
   { 
@@ -282,6 +283,7 @@ export const products = [
 export default function Products() {
   const [activeProduct, setActiveProduct] = useState(null);
   const { t } = useLanguage();
+  const { addToCart, addToWishlist, isInWishlist } = useCart();
 
   useEffect(() => {
     const handleOpenProduct = (e) => {
@@ -363,7 +365,7 @@ export default function Products() {
                 <div style={{ color: 'var(--clr-orange)', fontSize: isMobile ? '0.65rem' : '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
                   {t(product.subtitle)}
                 </div>
-                <h3 style={{ fontFamily: "'Caveat', cursive", fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 700, color: 'var(--clr-teal-dark)', marginBottom: '0.5rem', lineHeight: 1.2 }}>
+                <h3 style={{ fontFamily: "'Poppins', sans-serif", fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 700, color: 'var(--clr-teal-dark)', marginBottom: '0.5rem', lineHeight: 1.2 }}>
                   {t(product.name)}
                 </h3>
                 {!isMobile && (
@@ -417,7 +419,7 @@ export default function Products() {
             {/* Bottom: Clean Data */}
             <div style={{ padding: '2rem', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ fontFamily: "'Caveat', cursive", fontSize: '3rem', fontWeight: 700, color: 'var(--clr-teal-dark)', lineHeight: 1 }}>
+                <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: '3rem', fontWeight: 700, color: 'var(--clr-teal-dark)', lineHeight: 1 }}>
                   {t(activeProduct.name)}
                 </h2>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', color: 'var(--clr-orange-warm)', fontWeight: 700 }}>
@@ -484,19 +486,30 @@ export default function Products() {
                 <div style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)', flex: 1 }}>
                   {t('Need bulk pricing? Translated manuals available.')}
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <button 
+                    onClick={() => addToWishlist(activeProduct)}
+                    style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: '1px solid var(--clr-border)', background: isInWishlist(activeProduct.id) ? 'var(--clr-teal-light)' : '#fff', color: isInWishlist(activeProduct.id) ? 'var(--clr-teal-dark)' : 'var(--clr-text-main)', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}
+                  >
+                    <Heart size={18} fill={isInWishlist(activeProduct.id) ? 'currentColor' : 'none'} />
+                    {isInWishlist(activeProduct.id) ? 'Saved' : 'Wishlist'}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      addToCart(activeProduct, 1);
+                      setActiveProduct(null);
+                    }}
+                    className="btn-primary"
+                    style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  >
+                    <ShoppingCart size={18} />
+                    {t('Add to Cart')}
+                  </button>
                   <button 
                     onClick={() => setActiveProduct(null)}
                     style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: '1px solid var(--clr-border)', background: '#fff', color: 'var(--clr-text-main)', cursor: 'pointer', fontWeight: 600 }}
                   >
                     Close
-                  </button>
-                  <button 
-                    onClick={() => setActiveProduct(null)}
-                    className="btn-primary"
-                    style={{ padding: '0.75rem 1.5rem' }}
-                  >
-                    {t('Inquire Now')}
                   </button>
                 </div>
               </div>

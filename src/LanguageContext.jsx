@@ -16,7 +16,7 @@ const enDict = {
   'hero.title1': 'Growing Together,',
   'hero.title2': 'Thriving Together.',
   'hero.subtitle': 'FARMERS WHO FEED THE FUTURE, THANK YOU',
-  'hero.btn1': 'Discover Our Range',
+  'hero.btn1': 'Discover Our Products',
   'hero.btn2': 'Watch Success Story',
   'hero.stat.growth': 'Growth Rate',
   'hero.stat.survival': 'Survival Rate',
@@ -31,7 +31,7 @@ const enDict = {
   'about.pillar3.title': 'Tailored Solutions',
   'about.pillar3.text': 'By remaining closely attuned to the evolving challenges and needs of shrimp farming communities on the ground, we continuously develop next-generation bespoke supplements.',
   
-  'prod.tag': 'Our Range',
+  'prod.tag': 'Our Products',
   'prod.title': 'Premium Feed Supplements',
   'prod.desc': 'Scientific formulations designed to enhance growth, survival, and pond health.',
   'prod.details': 'View Details',

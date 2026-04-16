@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthProvider } from './AuthContext';
+import { CartProvider } from './CartContext';
 import Header from './components/Header.jsx';
 import LanguagePillBar from './components/LanguagePillBar.jsx';
 import Hero from './components/Hero.jsx';
@@ -17,9 +18,10 @@ import AdminPortal from './components/AdminPortal.jsx';
 function App() {
   return (
     <AuthProvider>
-      <>
-        <WaterRipple />
-        <Header />
+      <CartProvider>
+        <>
+          <WaterRipple />
+          <Header />
         
         <main>
           <Hero />
@@ -35,7 +37,8 @@ function App() {
         <LanguagePillBar />
         <ChatAgent />
         <AdminPortal />
-      </>
+        </>
+      </CartProvider>
     </AuthProvider>
   );
 }
