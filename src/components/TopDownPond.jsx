@@ -77,8 +77,6 @@ export default function TopDownPond() {
         this.speedX = (Math.random() - 0.5) * this.baseSpeed;
         this.speedY = (Math.random() - 0.5) * this.baseSpeed;
         this.angle = Math.atan2(this.speedY, this.speedX);
-        this.renderX = this.x;
-        this.renderY = this.y;
         
         this.swimCycle = Math.random() * Math.PI * 2;
         this.targetAngle = this.angle;
@@ -107,7 +105,7 @@ export default function TopDownPond() {
         this.swimCycle += 0.08 * (this.baseSpeed * this.currentSpeedMultiplier);
 
         if (Math.random() < 0.015) {
-          this.targetAngle += (Math.random() - 0.5) * 0.7;
+          this.targetAngle += (Math.random() - 0.5) * 1.0;
         }
 
         const dx = mouse.x - this.x;
@@ -121,38 +119,32 @@ export default function TopDownPond() {
           const fleeAngle = Math.atan2(dy, dx) + Math.PI;
           
           this.targetAngle = fleeAngle;
-          targetSpeedMultiplier = 1 + (force * 5.5);
-          this.swimCycle += 0.18 * force;
+          targetSpeedMultiplier = 1 + (force * 9);
+          this.swimCycle += 0.26 * force;
         }
 
-        this.currentSpeedMultiplier += (targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.028;
+        this.currentSpeedMultiplier += (targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
 
         const diff = this.targetAngle - this.angle;
-        this.angle += Math.atan2(Math.sin(diff), Math.cos(diff)) * 0.04;
+        this.angle += Math.atan2(Math.sin(diff), Math.cos(diff)) * 0.07;
 
         const targetVx = Math.cos(this.angle) * this.baseSpeed * this.currentSpeedMultiplier;
         const targetVy = Math.sin(this.angle) * this.baseSpeed * this.currentSpeedMultiplier;
-        this.speedX += (targetVx - this.speedX) * 0.18;
-        this.speedY += (targetVy - this.speedY) * 0.18;
+        this.speedX += (targetVx - this.speedX) * 0.24;
+        this.speedY += (targetVy - this.speedY) * 0.24;
 
         this.x += this.speedX;
         this.y += this.speedY;
-        this.renderX += (this.x - this.renderX) * 0.65;
-        this.renderY += (this.y - this.renderY) * 0.65;
 
         if (this.x < -150) this.x = width + 150;
         if (this.x > width + 150) this.x = -150;
         if (this.y < -150) this.y = height + 150;
         if (this.y > height + 150) this.y = -150;
-        if (this.renderX < -150) this.renderX = width + 150;
-        if (this.renderX > width + 150) this.renderX = -150;
-        if (this.renderY < -150) this.renderY = height + 150;
-        if (this.renderY > height + 150) this.renderY = -150;
       }
 
       draw() {
         ctx.save();
-        ctx.translate(this.renderX, this.renderY);
+        ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
 
         const sz = this.size;
@@ -174,19 +166,17 @@ export default function TopDownPond() {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Vector 2: Front Walking Legs
+        // Vector 2: Front walking legs and swimmer legs
         ctx.beginPath();
         for(let j=0; j<3; j++) {
-            let offset = sz * 0.1 * j;
-            ctx.moveTo(sz * 0.3 - offset, -sz * 0.15);
-            ctx.lineTo(sz * 0.4 - offset, -sz * 0.4);
-            ctx.lineTo(sz * 0.3 - offset, -sz * 0.5);
-            ctx.moveTo(sz * 0.3 - offset, sz * 0.15);
-            ctx.lineTo(sz * 0.4 - offset, sz * 0.4);
-            ctx.lineTo(sz * 0.3 - offset, sz * 0.5);
+            let offset = sz * 0.11 * j;
+            ctx.moveTo(sz * 0.28 - offset, -sz * 0.12);
+            ctx.quadraticCurveTo(sz * 0.38 - offset, -sz * 0.24, sz * 0.3 - offset, -sz * 0.44);
+            ctx.moveTo(sz * 0.28 - offset, sz * 0.12);
+            ctx.quadraticCurveTo(sz * 0.38 - offset, sz * 0.24, sz * 0.3 - offset, sz * 0.44);
         }
         ctx.strokeStyle = leg;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.8;
         ctx.stroke();
 
         // Vector 3: Carapace
@@ -371,40 +361,40 @@ export default function TopDownPond() {
         }
 
         // Vector 6: Tail Fan
-        // Tail fan with slightly cleaner shape
+        // Tail fan with a more shrimp-like spread
         ctx.beginPath();
-        ctx.moveTo(-sz * 0.12, 0);
-        ctx.quadraticCurveTo(-sz * 0.32, -sz * 0.05, -sz * 0.46, 0);
-        ctx.quadraticCurveTo(-sz * 0.32, sz * 0.05, -sz * 0.12, 0);
+        ctx.moveTo(-sz * 0.14, 0);
+        ctx.quadraticCurveTo(-sz * 0.3, -sz * 0.06, -sz * 0.45, 0);
+        ctx.quadraticCurveTo(-sz * 0.3, sz * 0.06, -sz * 0.14, 0);
         ctx.closePath();
-        ctx.fillStyle = hexToRgba(light, 0.5);
+        ctx.fillStyle = hexToRgba(light, 0.42);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(-sz * 0.12, -sz * 0.03);
-        ctx.quadraticCurveTo(-sz * 0.24, -sz * 0.27, -sz * 0.5, -sz * 0.19);
-        ctx.quadraticCurveTo(-sz * 0.37, -sz * 0.03, -sz * 0.12, 0);
+        ctx.moveTo(-sz * 0.14, -sz * 0.02);
+        ctx.quadraticCurveTo(-sz * 0.26, -sz * 0.22, -sz * 0.53, -sz * 0.18);
+        ctx.quadraticCurveTo(-sz * 0.38, -sz * 0.01, -sz * 0.14, 0);
         ctx.closePath();
         ctx.fillStyle = main;
         ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(-sz * 0.12, sz * 0.03);
-        ctx.quadraticCurveTo(-sz * 0.24, sz * 0.27, -sz * 0.5, sz * 0.19);
-        ctx.quadraticCurveTo(-sz * 0.37, sz * 0.03, -sz * 0.12, 0);
+        ctx.moveTo(-sz * 0.14, sz * 0.02);
+        ctx.quadraticCurveTo(-sz * 0.26, sz * 0.22, -sz * 0.53, sz * 0.18);
+        ctx.quadraticCurveTo(-sz * 0.38, sz * 0.01, -sz * 0.14, 0);
         ctx.closePath();
         ctx.fillStyle = main;
         ctx.fill();
 
         ctx.strokeStyle = hexToRgba(dark, 0.45);
-        ctx.lineWidth = 0.7;
+        ctx.lineWidth = 0.65;
         ctx.beginPath();
-        ctx.moveTo(-sz * 0.12, 0);
-        ctx.lineTo(-sz * 0.46, 0);
-        ctx.moveTo(-sz * 0.16, -sz * 0.02);
-        ctx.quadraticCurveTo(-sz * 0.26, -sz * 0.14, -sz * 0.44, -sz * 0.16);
-        ctx.moveTo(-sz * 0.16, sz * 0.02);
-        ctx.quadraticCurveTo(-sz * 0.26, sz * 0.14, -sz * 0.44, sz * 0.16);
+        ctx.moveTo(-sz * 0.14, 0);
+        ctx.lineTo(-sz * 0.47, 0);
+        ctx.moveTo(-sz * 0.18, -sz * 0.015);
+        ctx.quadraticCurveTo(-sz * 0.3, -sz * 0.1, -sz * 0.48, -sz * 0.14);
+        ctx.moveTo(-sz * 0.18, sz * 0.015);
+        ctx.quadraticCurveTo(-sz * 0.3, sz * 0.1, -sz * 0.48, sz * 0.14);
         ctx.stroke();
 
         ctx.restore();
