@@ -2,6 +2,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Mic, MicOff, Loader } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.jsx';
 import { getAIResponse } from '../aiService.js';
+const SPEECH_LANG_BCP47 = {
+  en: 'en-US',
+  te: 'te-IN',
+  hi: 'hi-IN',
+  ta: 'ta-IN',
+  kn: 'kn-IN',
+  ml: 'ml-IN',
+  bn: 'bn-IN',
+  vi: 'vi-VN',
+  id: 'id-ID',
+  th: 'th-TH',
+  zh: 'zh-CN',
+  es: 'es-ES',
+  fr: 'fr-FR',
+  ar: 'ar-SA',
+  pt: 'pt-BR',
+  ru: 'ru-RU',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  de: 'de-DE',
+  it: 'it-IT',
+  tr: 'tr-TR'
+};
 
 export default function ChatAgent() {
   const { lang, t } = useLanguage();
@@ -39,7 +62,7 @@ export default function ChatAgent() {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     
     const recognition = new SpeechRecognition();
-    recognition.lang = lang === 'te' ? 'te-IN' : lang === 'hi' ? 'hi-IN' : 'en-US';
+    recognition.lang = SPEECH_LANG_BCP47[lang] || 'en-US';
     recognition.interimResults = false;
     
     recognition.onstart = () => setIsListening(true);

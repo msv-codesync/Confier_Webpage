@@ -1,7 +1,32 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
 import { teExtras, hiExtras } from './locales/langExtras.js';
 
 const LanguageContext = createContext();
+
+/** Every pill id in LanguagePillBar — explicit dict so lookups never miss. */
+export const SUPPORTED_LANG_CODES = [
+  'en',
+  'te',
+  'hi',
+  'ta',
+  'kn',
+  'ml',
+  'vi',
+  'id',
+  'th',
+  'zh',
+  'bn',
+  'es',
+  'fr',
+  'ar',
+  'pt',
+  'ru',
+  'ja',
+  'ko',
+  'de',
+  'it',
+  'tr'
+];
 
 // Base English dictionary
 const enDict = {
@@ -149,6 +174,15 @@ const enDict = {
   'events.emptyTitle': 'No posts yet',
   'events.emptyHint': 'Turn on admin mode to create the first post.',
   'events.alertNeedImage': 'Please provide an image and a caption.',
+  'events.uploadImages': 'Upload photos (you can select several at once) *',
+  'events.alertNeedImages': 'Add at least one photo and a caption.',
+  'events.confierLive': 'Confier Live',
+  'events.share': 'Share',
+  'events.linkCopied': 'Link copied to clipboard.',
+  'events.shareFallback': 'Share or copy the page address from your browser.',
+  'events.carouselPrev': 'Previous photo',
+  'events.carouselNext': 'Next photo',
+  'events.photoCount': '{n} photos selected',
   'events.confirmDelete': 'Are you sure you want to delete this post?',
   'stories.quote': 'Their growth tells our success.',
   'stories.watch': 'Watch',
@@ -321,16 +355,36 @@ const hiDict = {
   'chat.error': 'माफ़ कीजिए, कृपया फिर से प्रयास करें।'
 };
 
-const dictionaries = {
-  en: enDict,
-  te: { ...enDict, ...teDict, ...teExtras },
-  hi: { ...enDict, ...hiDict, ...hiExtras }
-};
+const teBundle = { ...enDict, ...teDict, ...teExtras };
+const hiBundle = { ...enDict, ...hiDict, ...hiExtras };
+const englishFallback = { ...enDict };
+
+const dictionaries = Object.fromEntries(
+  SUPPORTED_LANG_CODES.map((code) => {
+    if (code === 'en') return [code, enDict];
+    if (code === 'te') return [code, teBundle];
+    if (code === 'hi') return [code, hiBundle];
+    return [code, englishFallback];
+  })
+);
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState('en');
+  const [lang, setLangState] = useState('en');
+
+  const setLang = useCallback((code) => {
+    const next = typeof code === 'string' && dictionaries[code] ? code : 'en';
+    setLangState(next);
+  }, []);
+
   const dict = useMemo(() => dictionaries[lang] || enDict, [lang]);
-  const t = (key) => dict[key] || enDict[key] || key;
+  const t = useCallback((key) => dict[key] || enDict[key] || key, [dict]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const htmlLang =
+      lang === 'zh' ? 'zh-Hans' : lang === 'ar' ? 'ar' : lang === 'pt' ? 'pt' : lang;
+    document.documentElement.lang = htmlLang;
+  }, [lang]);
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>

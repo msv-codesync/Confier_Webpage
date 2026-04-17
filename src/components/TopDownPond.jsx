@@ -22,8 +22,10 @@ export default function TopDownPond() {
     let midVeil;
     let lowerDepth;
     let grainLayer = null;
+    let grainIdleHandle = null;
+    let grainBuildGeneration = 0;
 
-    const rebuildBackgroundCaches = () => {
+    const rebuildGradientCaches = () => {
       waterGrad = ctx.createLinearGradient(0, 0, 0, height);
       waterGrad.addColorStop(0, '#4fa8b8');
       waterGrad.addColorStop(0.32, '#2c8a9f');
@@ -42,15 +44,17 @@ export default function TopDownPond() {
       lowerDepth = ctx.createLinearGradient(0, height * 0.7, 0, height);
       lowerDepth.addColorStop(0, 'rgba(0, 0, 0, 0)');
       lowerDepth.addColorStop(1, 'rgba(6, 43, 56, 0.16)');
+    };
 
+    const buildGrainLayer = () => {
       const mobile = width < 768;
       const grainCanvas = document.createElement('canvas');
       grainCanvas.width = Math.max(1, Math.floor(width));
       grainCanvas.height = Math.max(1, Math.floor(height));
       const gctx = grainCanvas.getContext('2d');
       const grainCount = mobile
-        ? 72
-        : Math.min(190, Math.max(90, Math.floor((width * height) / 9000)));
+        ? 64
+        : Math.min(170, Math.max(85, Math.floor((width * height) / 10000)));
       for (let i = 0; i < grainCount; i += 1) {
         gctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.03 + 0.01})`;
         gctx.fillRect(
@@ -63,7 +67,33 @@ export default function TopDownPond() {
       grainLayer = grainCanvas;
     };
 
-    rebuildBackgroundCaches();
+    const cancelScheduledGrain = () => {
+      if (grainIdleHandle == null) return;
+      if (typeof cancelIdleCallback !== 'undefined') {
+        cancelIdleCallback(grainIdleHandle);
+      } else {
+        clearTimeout(grainIdleHandle);
+      }
+      grainIdleHandle = null;
+    };
+
+    const scheduleGrainRebuild = () => {
+      cancelScheduledGrain();
+      const gen = ++grainBuildGeneration;
+      const run = () => {
+        grainIdleHandle = null;
+        if (gen !== grainBuildGeneration) return;
+        buildGrainLayer();
+      };
+      if (typeof requestIdleCallback !== 'undefined') {
+        grainIdleHandle = requestIdleCallback(run, { timeout: 450 });
+      } else {
+        grainIdleHandle = setTimeout(run, 40);
+      }
+    };
+
+    rebuildGradientCaches();
+    scheduleGrainRebuild();
     const scaleFactor = isMobile ? 0.6 : 1;
     const mouse = {
       x: -1000,
@@ -124,7 +154,8 @@ export default function TopDownPond() {
       canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
-      rebuildBackgroundCaches();
+      rebuildGradientCaches();
+      scheduleGrainRebuild();
     };
     window.addEventListener('resize', handleResize);
 
@@ -304,29 +335,30 @@ export default function TopDownPond() {
         ctx.quadraticCurveTo(sz * 0.34, sz * 0.24, sz * 0.5, 0);
         ctx.closePath();
         
-        // Create softer, matte gradient based on pattern type
-        let bodyGrad = ctx.createLinearGradient(0, -sz * 0.2, 0, sz * 0.2);
-        if (this.patternType % 3 === 0) {
-          // Striped pattern - softer, less metallic
-          bodyGrad.addColorStop(0, dark);
-          bodyGrad.addColorStop(0.35, main);
-          bodyGrad.addColorStop(0.5, main);
-          bodyGrad.addColorStop(0.65, main);
-          bodyGrad.addColorStop(1, dark);
-        } else if (this.patternType % 3 === 1) {
-          // Mottled pattern - softer
-          bodyGrad.addColorStop(0, main);
-          bodyGrad.addColorStop(0.4, dark);
-          bodyGrad.addColorStop(0.6, main);
-          bodyGrad.addColorStop(1, main);
-        } else {
-          // Matte gradient (no strong shine)
-          bodyGrad.addColorStop(0, dark);
-          bodyGrad.addColorStop(0.5, main);
-          bodyGrad.addColorStop(1, dark);
+        const carapaceKey = `${this.patternType}_${Math.round(sz * 40)}`;
+        if (this._carapaceGradKey !== carapaceKey) {
+          this._carapaceGradKey = carapaceKey;
+          const bodyGrad = ctx.createLinearGradient(0, -sz * 0.2, 0, sz * 0.2);
+          if (this.patternType % 3 === 0) {
+            bodyGrad.addColorStop(0, dark);
+            bodyGrad.addColorStop(0.35, main);
+            bodyGrad.addColorStop(0.5, main);
+            bodyGrad.addColorStop(0.65, main);
+            bodyGrad.addColorStop(1, dark);
+          } else if (this.patternType % 3 === 1) {
+            bodyGrad.addColorStop(0, main);
+            bodyGrad.addColorStop(0.4, dark);
+            bodyGrad.addColorStop(0.6, main);
+            bodyGrad.addColorStop(1, main);
+          } else {
+            bodyGrad.addColorStop(0, dark);
+            bodyGrad.addColorStop(0.5, main);
+            bodyGrad.addColorStop(1, dark);
+          }
+          this._carapaceGrad = bodyGrad;
         }
-        
-        ctx.fillStyle = bodyGrad;
+
+        ctx.fillStyle = this._carapaceGrad;
         ctx.strokeStyle = dark;
         ctx.lineWidth = 1;
         ctx.fill();
@@ -638,13 +670,25 @@ export default function TopDownPond() {
               if (heroVisible) startLoop();
               else stopLoop();
             },
-            { threshold: 0.02, rootMargin: '64px 0px 64px 0px' }
+            // threshold 0.02 often kept the hero “invisible” to the observer at first paint → frozen pond
+            { threshold: 0, rootMargin: '80px 0px 120px 0px' }
           )
         : null;
-    io?.observe(canvas);
-    startLoop();
+
+    let bootRafInner = null;
+    let bootRafOuter = requestAnimationFrame(() => {
+      bootRafOuter = null;
+      bootRafInner = requestAnimationFrame(() => {
+        bootRafInner = null;
+        io?.observe(canvas);
+        startLoop();
+      });
+    });
 
     return () => {
+      if (bootRafOuter != null) cancelAnimationFrame(bootRafOuter);
+      if (bootRafInner != null) cancelAnimationFrame(bootRafInner);
+      cancelScheduledGrain();
       io?.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchstart', handleTouch);
