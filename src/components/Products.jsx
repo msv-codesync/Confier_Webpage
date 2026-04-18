@@ -369,6 +369,8 @@ export default function Products() {
         {isMobile && (
           <style>{`
             .mobile-carousel::-webkit-scrollbar { display: none; }
+            /* Let vertical page scroll win unless the gesture is clearly horizontal (avoids “stuck” scroll). */
+            .mobile-carousel { touch-action: pan-x pan-y; overscroll-behavior-x: contain; }
           `}</style>
         )}
 
@@ -377,7 +379,8 @@ export default function Products() {
           gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fill, minmax(320px, 1fr))', 
           gap: isMobile ? '1rem' : '2rem',
           overflowX: isMobile ? 'auto' : 'visible',
-          scrollSnapType: isMobile ? 'x mandatory' : 'none',
+          overflowY: 'visible',
+          scrollSnapType: isMobile ? 'x proximity' : 'none',
           WebkitOverflowScrolling: 'touch',
           paddingBottom: isMobile ? '1rem' : '0',
           scrollbarWidth: 'none' // Firefox fallback
@@ -478,16 +481,20 @@ export default function Products() {
           
           <div style={{ 
             background: 'rgba(255,255,255,0.96)', width: '100%', maxWidth: '860px', borderRadius: '24px', 
-            overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh'
+            overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 'min(90dvh, 900px)',
+            touchAction: 'manipulation'
           }} onClick={e => e.stopPropagation()}>
             
             {/* Top: 3D viewer — GLB when product.modelGlb is set */}
             <div style={{ 
-              height: ap.modelGlb ? (isMobile ? 'min(52vh, 320px)' : 'min(48vh, 420px)') : (isMobile ? '220px' : '300px'),
-              minHeight: ap.modelGlb ? (isMobile ? 260 : 360) : undefined,
+              flexShrink: 0,
+              height: ap.modelGlb ? (isMobile ? 'min(42vh, 280px)' : 'min(48vh, 420px)') : (isMobile ? '200px' : '300px'),
+              minHeight: ap.modelGlb ? (isMobile ? 220 : 360) : undefined,
+              maxHeight: isMobile ? '45vh' : undefined,
               background: ap.modelGlb ? '#062a32' : 'linear-gradient(135deg, var(--clr-teal-dark), var(--clr-ocean))',
               position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              touchAction: 'none'
             }}>
               <button 
                 onClick={() => setActiveProduct(null)}
@@ -530,8 +537,18 @@ export default function Products() {
               )}
             </div>
 
-            {/* Bottom: Clean Data */}
-            <div style={{ padding: isMobile ? '1rem' : '2rem', overflowY: 'auto' }}>
+            {/* Bottom: scrolls inside modal on short viewports (flex minHeight:0 is required on iOS). */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                padding: isMobile ? '1rem' : '2rem',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehaviorY: 'contain',
+                touchAction: 'pan-y'
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', marginBottom: '1rem', gap: '0.6rem' }}>
                 <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: isMobile ? '1.6rem' : '2.25rem', fontWeight: 700, color: 'var(--clr-teal-dark)', lineHeight: 1.15, letterSpacing: '-0.01em' }}>
                   {activeProduct.name}

@@ -106,7 +106,7 @@ export default function TopDownPond() {
     if (!lowPower) {
       scheduleGrainRebuild();
     }
-    const scaleFactor = lowPower ? 0.52 : isMobile ? 0.6 : 1;
+    const scaleFactor = reducedMotion ? 0.58 : saveData ? 0.55 : isMobile ? 0.72 : 1;
     const mouse = {
       x: -1000,
       y: -1000,
@@ -139,7 +139,7 @@ export default function TopDownPond() {
     const handleTouch = (e) => {
       if (!e.touches?.[0]) return;
       const now = performance.now();
-      if (lowPower && now - lastTouchSample < 48) return;
+      if (lowPower && now - lastTouchSample < 16) return;
       lastTouchSample = now;
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.touches[0].clientX - rect.left;
@@ -198,7 +198,12 @@ export default function TopDownPond() {
         this.targetAngle = this.angle;
         this.calmDrift = 0;
         this.escapeEase = 0;
-        
+
+        /** Tap-to-scare: flee from finger until `tapPanicEnd`, then normal swim resumes. */
+        this.tapPanicEnd = 0;
+        this.tapCx = 0;
+        this.tapCy = 0;
+
         // Assign pattern type (7-8 variants)
         this.patternType = Math.floor(Math.random() * 8);
       }
@@ -226,9 +231,10 @@ export default function TopDownPond() {
           this.targetAngle += (Math.random() - 0.5) * 1.0;
         }
 
-        const dx = mouse.x - this.x;
-        const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const now = performance.now();
+        const dxM = mouse.x - this.x;
+        const dyM = mouse.y - this.y;
+        const distM = Math.sqrt(dxM * dxM + dyM * dyM);
 
         let targetSpeedMultiplier = 1;
 
@@ -237,7 +243,31 @@ export default function TopDownPond() {
         let homeVx = 0;
         let homeVy = 0;
 
-        if (mouse.active && distance < mouse.radius) {
+        if (now < this.tapPanicEnd) {
+          const tLeft = this.tapPanicEnd - now;
+          const tNorm = Math.min(1, tLeft / 2000);
+          const dx = this.x - this.tapCx;
+          const dy = this.y - this.tapCy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const awayAngle = Math.atan2(dy, dx);
+          const fleeDiff = Math.atan2(
+            Math.sin(awayAngle - this.targetAngle),
+            Math.cos(awayAngle - this.targetAngle)
+          );
+          this.targetAngle += fleeDiff * (0.36 + 0.14 * tNorm);
+          this.swimCycle += 0.35 + 0.25 * tNorm;
+          this.calmDrift = Math.max(0, this.calmDrift - 0.07);
+          this.escapeEase = Math.min(1, this.escapeEase + 0.11);
+          targetSpeedMultiplier = 3.2 + 5.2 * tNorm;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const push = this.baseSpeed * (6 + 11 * tNorm);
+          fleeVx = nx * push;
+          fleeVy = ny * push;
+        } else if (mouse.active && distM < mouse.radius) {
+          const dx = dxM;
+          const dy = dyM;
+          const distance = distM;
           const raw = (mouse.radius - distance) / mouse.radius;
           // Slightly super-linear: lively mid-range reaction, still smooth at edge (no jolt).
           const force = Math.pow(raw, 1.22);
@@ -270,7 +300,9 @@ export default function TopDownPond() {
           fleeVy = -ny * biasStrength;
         } else {
           // Return to calm quickly so the pond feels “full” again after pointer leaves.
-          this.calmDrift = Math.min(1, this.calmDrift + 0.038);
+          const postTapEase =
+            this.tapPanicEnd > 0 && now >= this.tapPanicEnd && now < this.tapPanicEnd + 900;
+          this.calmDrift = Math.min(1, this.calmDrift + (postTapEase ? 0.052 : 0.038));
           targetSpeedMultiplier = 1 + (0.22 * (1 - this.calmDrift));
           this.escapeEase = Math.max(0, this.escapeEase - 0.058);
 
@@ -574,14 +606,14 @@ export default function TopDownPond() {
       }
     }
 
-    const shrimpCount = lowPower ? 6 : isMobile ? 10 : 24;
+    const shrimpCount = reducedMotion ? 22 : saveData ? 30 : isMobile ? 56 : 72;
     const shrimpFlock = [];
-    const minSpacing = lowPower ? 40 : isMobile ? 44 : 62;
+    const minSpacing = reducedMotion ? 26 : saveData ? 28 : isMobile ? 22 : 30;
     for (let i = 0; i < shrimpCount; i++) {
       const shrimp = new Shrimp();
       let attempts = 0;
       while (
-        attempts < 60 &&
+        attempts < 180 &&
         shrimpFlock.some((other) => {
           const sx = other.x - shrimp.x;
           const sy = other.y - shrimp.y;
@@ -595,7 +627,32 @@ export default function TopDownPond() {
       shrimpFlock.push(shrimp);
     }
 
-    const particleCount = lowPower ? 6 : isMobile ? 14 : 40;
+    const TAP_PANIC_MS = 2000;
+    const handleCanvasPointerDown = (e) => {
+      if (typeof e.button === 'number' && e.button !== 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      let best = null;
+      let bestD = Infinity;
+      for (let i = 0; i < shrimpFlock.length; i += 1) {
+        const s = shrimpFlock[i];
+        const d = Math.hypot(s.x - px, s.y - py);
+        const hitR = s.size * 1.32;
+        if (d < hitR && d < bestD) {
+          best = s;
+          bestD = d;
+        }
+      }
+      if (!best) return;
+      const t = performance.now();
+      best.tapPanicEnd = t + TAP_PANIC_MS;
+      best.tapCx = px;
+      best.tapCy = py;
+    };
+    canvas.addEventListener('pointerdown', handleCanvasPointerDown);
+
+    const particleCount = reducedMotion ? 10 : saveData ? 14 : isMobile ? 28 : 52;
     const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -608,11 +665,13 @@ export default function TopDownPond() {
     }
 
     let rafId = null;
-    let time = 0;
+    let tStart = 0;
     let heroVisible = true;
 
-    const drawFrame = () => {
-      time += 1;
+    /** Wall-clock phase so water/particles stay even at 60/90/120Hz (no “skipped frame” stutter from throttling). */
+    const drawFrame = (ts) => {
+      if (!tStart) tStart = ts;
+      const time = (ts - tStart) * 0.06;
       ctx.clearRect(0, 0, width, height);
 
       ctx.fillStyle = waterGrad;
@@ -670,17 +729,10 @@ export default function TopDownPond() {
       });
     };
 
-    const frameBudgetMs = lowPower ? 38 : 0;
-    let lastPaintTs = 0;
     const loop = (ts = performance.now()) => {
       rafId = null;
       if (!heroVisible) return;
-      if (frameBudgetMs > 0 && lastPaintTs && ts - lastPaintTs < frameBudgetMs) {
-        rafId = requestAnimationFrame(loop);
-        return;
-      }
-      lastPaintTs = ts;
-      drawFrame();
+      drawFrame(ts);
       rafId = requestAnimationFrame(loop);
     };
 
@@ -731,6 +783,7 @@ export default function TopDownPond() {
       window.removeEventListener('touchend', handleReset);
       window.removeEventListener('mouseout', handleReset);
       window.removeEventListener('resize', handleResize);
+      canvas.removeEventListener('pointerdown', handleCanvasPointerDown);
       stopLoop();
     };
 
@@ -741,7 +794,7 @@ export default function TopDownPond() {
       ref={canvasRef} 
       style={{ 
         position: 'absolute', inset: 0, width: '100%', height: '100%', 
-        pointerEvents: 'none', zIndex: 0 
+        pointerEvents: 'auto', touchAction: 'manipulation', zIndex: 0 
       }} 
     />
   );
