@@ -1,0 +1,5 @@
+# Lean deploy: Vercel installs deps and runs `vite build`; these are huge locally.
+node_modules
+.npm-cache
+dist
+assets
