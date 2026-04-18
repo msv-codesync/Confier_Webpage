@@ -11,7 +11,15 @@ export default function TopDownPond() {
     let width = canvas.offsetWidth;
     let height = canvas.offsetHeight;
     const isMobile = width < 768;
-    let dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 2);
+    const coarsePointer =
+      typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)')?.matches;
+    const saveData =
+      typeof navigator !== 'undefined' && navigator.connection?.saveData === true;
+    const reducedMotion =
+      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    /** Phones / tablets / data-saver: cheaper pond so the rest of the page stays responsive. */
+    const lowPower = isMobile || coarsePointer || saveData || reducedMotion;
+    let dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1 : isMobile ? 1 : 2);
     canvas.width = Math.max(1, Math.floor(width * dpr));
     canvas.height = Math.max(1, Math.floor(height * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -53,7 +61,7 @@ export default function TopDownPond() {
       grainCanvas.height = Math.max(1, Math.floor(height));
       const gctx = grainCanvas.getContext('2d');
       const grainCount = mobile
-        ? 64
+        ? 40
         : Math.min(170, Math.max(85, Math.floor((width * height) / 10000)));
       for (let i = 0; i < grainCount; i += 1) {
         gctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.03 + 0.01})`;
@@ -93,8 +101,10 @@ export default function TopDownPond() {
     };
 
     rebuildGradientCaches();
-    scheduleGrainRebuild();
-    const scaleFactor = isMobile ? 0.6 : 1;
+    if (!lowPower) {
+      scheduleGrainRebuild();
+    }
+    const scaleFactor = lowPower ? 0.52 : isMobile ? 0.6 : 1;
     const mouse = {
       x: -1000,
       y: -1000,
@@ -123,14 +133,17 @@ export default function TopDownPond() {
       mouse.lastSeen = performance.now();
     };
 
+    let lastTouchSample = 0;
     const handleTouch = (e) => {
-      if (e.touches && e.touches[0]) {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.touches[0].clientX - rect.left;
-        mouse.y = e.touches[0].clientY - rect.top;
-        mouse.active = true;
-        mouse.lastSeen = performance.now();
-      }
+      if (!e.touches?.[0]) return;
+      const now = performance.now();
+      if (lowPower && now - lastTouchSample < 48) return;
+      lastTouchSample = now;
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.touches[0].clientX - rect.left;
+      mouse.y = e.touches[0].clientY - rect.top;
+      mouse.active = true;
+      mouse.lastSeen = now;
     };
 
     const handleReset = () => {
@@ -139,9 +152,13 @@ export default function TopDownPond() {
       mouse.active = false;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    if (!lowPower) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
     window.addEventListener('touchstart', handleTouch, { passive: true });
-    window.addEventListener('touchmove', handleTouch, { passive: true });
+    if (!lowPower) {
+      window.addEventListener('touchmove', handleTouch, { passive: true });
+    }
     window.addEventListener('touchend', handleReset);
     window.addEventListener('mouseout', handleReset);
     
@@ -149,13 +166,18 @@ export default function TopDownPond() {
       width = canvas.offsetWidth;
       height = canvas.offsetHeight;
       const mobile = width < 768;
-      dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1 : 2);
+      dpr = Math.min(window.devicePixelRatio || 1, lowPower || mobile ? 1 : 2);
       canvas.width = Math.max(1, Math.floor(width * dpr));
       canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
       rebuildGradientCaches();
-      scheduleGrainRebuild();
+      if (!lowPower) {
+        scheduleGrainRebuild();
+      } else {
+        cancelScheduledGrain();
+        grainLayer = null;
+      }
     };
     window.addEventListener('resize', handleResize);
 
@@ -550,9 +572,9 @@ export default function TopDownPond() {
       }
     }
 
-    const shrimpCount = isMobile ? 16 : 28;
+    const shrimpCount = lowPower ? 6 : isMobile ? 10 : 24;
     const shrimpFlock = [];
-    const minSpacing = isMobile ? 48 : 66;
+    const minSpacing = lowPower ? 40 : isMobile ? 44 : 62;
     for (let i = 0; i < shrimpCount; i++) {
       const shrimp = new Shrimp();
       let attempts = 0;
@@ -571,7 +593,7 @@ export default function TopDownPond() {
       shrimpFlock.push(shrimp);
     }
 
-    const particleCount = isMobile ? 28 : 48;
+    const particleCount = lowPower ? 6 : isMobile ? 14 : 40;
     const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -615,10 +637,12 @@ export default function TopDownPond() {
       // Soft water layer lines for realistic pond feel
       ctx.strokeStyle = `rgba(165, 230, 235, ${0.018 + Math.sin(time * 0.008) * 0.006})`;
       ctx.lineWidth = 0.5;
-      for (let layer = 0; layer < 2; layer++) {
+      const lineLayers = lowPower ? 1 : 2;
+      const lineStep = lowPower ? 90 : 60;
+      for (let layer = 0; layer < lineLayers; layer++) {
         const baseY = height * (0.3 + layer * 0.18);
         ctx.beginPath();
-        for (let x = 0; x < width + 50; x += 60) {
+        for (let x = 0; x < width + 50; x += lineStep) {
           const y = baseY + Math.sin((x + time * (0.55 + layer * 0.08)) * 0.008 + layer) * (2.5 + layer);
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
@@ -644,9 +668,16 @@ export default function TopDownPond() {
       });
     };
 
-    const loop = () => {
+    const frameBudgetMs = lowPower ? 38 : 0;
+    let lastPaintTs = 0;
+    const loop = (ts = performance.now()) => {
       rafId = null;
       if (!heroVisible) return;
+      if (frameBudgetMs > 0 && lastPaintTs && ts - lastPaintTs < frameBudgetMs) {
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      lastPaintTs = ts;
       drawFrame();
       rafId = requestAnimationFrame(loop);
     };
@@ -690,9 +721,11 @@ export default function TopDownPond() {
       if (bootRafInner != null) cancelAnimationFrame(bootRafInner);
       cancelScheduledGrain();
       io?.disconnect();
-      window.removeEventListener('mousemove', handleMouseMove);
+      if (!lowPower) {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('touchmove', handleTouch);
+      }
       window.removeEventListener('touchstart', handleTouch);
-      window.removeEventListener('touchmove', handleTouch);
       window.removeEventListener('touchend', handleReset);
       window.removeEventListener('mouseout', handleReset);
       window.removeEventListener('resize', handleResize);

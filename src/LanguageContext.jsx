@@ -63,6 +63,7 @@ const enDict = {
   'prod.details': 'View Details',
   'prod.interact': 'Tap to Interact 3D',
   'prod.card3dTeaser': 'Open to view & rotate 3D',
+  'prod.card3dLoading': '3D preview loads when this card is in view',
   'prod.price.contact': 'Contact for pricing',
   'prod.modal.rotate3d': 'Drag to rotate the 3D model',
   'prod.modal.verifiedBenefits': 'Verified benefits',

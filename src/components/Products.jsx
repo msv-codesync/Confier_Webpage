@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, X, CheckCircle2, ShoppingCart, Heart, Scan } from 'lucide-react';
+import { Box, X, CheckCircle2, ShoppingCart, Heart } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { localizeProduct } from '../data/productI18n.js';
 import ProductGlbViewer from './ProductGlbViewer.jsx';
+import ProductCardGlbPreview from './ProductCardGlbPreview.jsx';
 
 export const products = [
   { 
@@ -422,33 +423,13 @@ export default function Products() {
                 overflow: 'hidden'
               }}>
                 {p.modelGlb ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.45rem',
-                      height: '100%',
-                      padding: '0.75rem',
-                      pointerEvents: 'none',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Scan size={isMobile ? 38 : 56} strokeWidth={1.15} color="rgba(255,255,255,0.92)" />
-                    <span
-                      style={{
-                        fontSize: isMobile ? '0.68rem' : '0.78rem',
-                        fontWeight: 700,
-                        color: 'rgba(255,255,255,0.9)',
-                        letterSpacing: '0.04em',
-                        maxWidth: '12rem',
-                        lineHeight: 1.35
-                      }}
-                    >
-                      {t('prod.card3dTeaser')}
-                    </span>
-                  </div>
+                  <ProductCardGlbPreview
+                    src={p.modelGlb}
+                    alt={product.name}
+                    isMobile={isMobile}
+                    t={t}
+                    live={!isMobile}
+                  />
                 ) : (
                   <div className="animate-float" style={{ color: 'var(--clr-teal-dark)' }}>
                     <Box size={isMobile ? 40 : 80} strokeWidth={1} />
