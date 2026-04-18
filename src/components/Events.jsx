@@ -26,10 +26,6 @@ function MediaCarousel({ urls, t, isMobile }) {
   const touchStartX = useRef(null);
   const len = urls.length;
 
-  useEffect(() => {
-    setIndex(0);
-  }, [urls.join('|')]);
-
   const go = useCallback(
     (delta) => {
       if (len <= 1) return;
@@ -584,7 +580,7 @@ export default function Events() {
                   </div>
                 </header>
 
-                <MediaCarousel urls={urls} t={t} isMobile={isMobile} />
+                <MediaCarousel key={urls.join('|')} urls={urls} t={t} isMobile={isMobile} />
 
                 {/* Author line + caption */}
                 <div style={{ padding: '12px 16px 4px' }}>

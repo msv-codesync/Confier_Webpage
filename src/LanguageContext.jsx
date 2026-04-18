@@ -62,6 +62,7 @@ const enDict = {
   'prod.desc': 'Scientific formulations designed to enhance growth, survival, and pond health.',
   'prod.details': 'View Details',
   'prod.interact': 'Tap to Interact 3D',
+  'prod.card3dTeaser': 'Open to view & rotate 3D',
   'prod.price.contact': 'Contact for pricing',
   'prod.modal.rotate3d': 'Drag to rotate the 3D model',
   'prod.modal.verifiedBenefits': 'Verified benefits',

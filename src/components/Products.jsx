@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Box, X, CheckCircle2, ShoppingCart, Heart } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, X, CheckCircle2, ShoppingCart, Heart, Scan } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { localizeProduct } from '../data/productI18n.js';
+import ProductGlbViewer from './ProductGlbViewer.jsx';
 
 export const products = [
   { 
-    id: 1, name: "CONFIER FEED BITE™", subtitle: "Gut Probiotic", price: "Contact for Details",
+    id: 1,
+    name: "CONFIER FEED BITE™",
+    subtitle: "Gut Probiotic",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-feed-bite.glb',
     tagline: "Protects Shrimp Gut Health and Enhances Yield",
     benefits: [
       "Improves survival rate and growth.",
@@ -24,7 +29,11 @@ export const products = [
     }
   },
   { 
-    id: 2, name: "CONFIER LIV™", subtitle: "Hepatopancreas Protect", price: "Contact for Details",
+    id: 2,
+    name: "CONFIER LIV™",
+    subtitle: "Hepatopancreas Protect",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-liv.glb',
     tagline: "Protecting Shrimp Liver, Ensuring Their Health",
     benefits: [
       "Helps in maintaining healthy hepatopancreas.",
@@ -79,7 +88,11 @@ export const products = [
     }
   },
   { 
-    id: 5, name: "CONFIER MaZiK®", subtitle: "Liquid Mineral", price: "Contact for Details",
+    id: 5,
+    name: "CONFIER MaZiK®",
+    subtitle: "Liquid Mineral",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-mazik.glb',
     tagline: "Healthier Shrimp, Faster Growth, and Higher Yield",
     benefits: [
       "It prompts moulting in shrimps fast and safer method",
@@ -98,7 +111,11 @@ export const products = [
     }
   },
   { 
-    id: 6, name: "CONFIER DETOX Plus®", subtitle: "Soil Probiotic", price: "Contact for Details",
+    id: 6,
+    name: "CONFIER DETOX Plus®",
+    subtitle: "Soil Probiotic",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-detox.glb',
     tagline: "Purify Your Pond, Thrive Your Shrimp",
     benefits: [
       "Ingest large amounts of pollutants like organic matter, toxic compounds which deteriorate the pond bottom and pond water.",
@@ -116,7 +133,11 @@ export const products = [
     }
   },
   { 
-    id: 7, name: "CONFIER FLOC™", subtitle: "Plankton Pro Enzyme", price: "Contact for Details",
+    id: 7,
+    name: "CONFIER FLOC™",
+    subtitle: "Plankton Pro Enzyme",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-floc.glb',
     tagline: "Boost Plankton and Enhance Shrimp Growth",
     benefits: [
       "Floc improves the ideal pond conditions by maintaining good phyto and zooplankton populations.",
@@ -134,7 +155,11 @@ export const products = [
     }
   },
   { 
-    id: 8, name: "CONFIER K-PLUS™", subtitle: "Balance Minerals, Boost Shrimp Health", price: "Contact for Details",
+    id: 8,
+    name: "CONFIER K-PLUS™",
+    subtitle: "Balance Minerals, Boost Shrimp Health",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-k-plus.glb',
     tagline: "Plays an important role in shrimp moulting, osmoregulation, and regulation of blood pH.",
     benefits: [
       "Plays an important role in shrimp moulting, osmoregulation, and regulation of blood pH.",
@@ -152,7 +177,11 @@ export const products = [
     }
   },
   { 
-    id: 9, name: "CONFIER SOIL AFM™", subtitle: "The Scientific Solution for Ammonia & Nitrite", price: "Contact for Details",
+    id: 9,
+    name: "CONFIER SOIL AFM™",
+    subtitle: "The Scientific Solution for Ammonia & Nitrite",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-soil-afm.glb',
     tagline: "Purifying Ponds, Enhancing Shrimp Growth",
     benefits: [
       "Absorbs toxic gases from the pond.",
@@ -188,7 +217,11 @@ export const products = [
     }
   },
   { 
-    id: 11, name: "CONFIER GUTPRO Plus™", subtitle: "Gut Probiotic", price: "Contact for Details",
+    id: 11,
+    name: "CONFIER GUTPRO Plus™",
+    subtitle: "Gut Probiotic",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-gutpro.glb',
     tagline: "Enhancing Shrimp Health, Growth, and Vitality",
     benefits: [
       "Improves shrimp digestion and resistance capacity.",
@@ -262,7 +295,11 @@ export const products = [
     }
   },
   { 
-    id: 15, name: "CONFIER MICROMIN®", subtitle: "Chelated Trace Mineral", price: "Contact for Details",
+    id: 15,
+    name: "CONFIER MICROMIN®",
+    subtitle: "Chelated Trace Mineral",
+    price: "Contact for Details",
+    modelGlb: '/models/confier-micromin.glb',
     tagline: "Strengthening Shells, Boosting Shrimp Life",
     benefits: [
       "Helps in better shell formation and regular moulting.",
@@ -301,6 +338,18 @@ export default function Products() {
     return () => window.removeEventListener('open-product', handleOpenProduct);
   }, []);
 
+  /** Interactive 3D first, placeholder cards after (stable by id within each band). */
+  const displayProducts = useMemo(
+    () =>
+      [...products].sort((a, b) => {
+        const a3 = Boolean(a.modelGlb);
+        const b3 = Boolean(b.modelGlb);
+        if (a3 !== b3) return a3 ? -1 : 1;
+        return a.id - b.id;
+      }),
+    []
+  );
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
@@ -331,11 +380,27 @@ export default function Products() {
           paddingBottom: isMobile ? '1rem' : '0',
           scrollbarWidth: 'none' // Firefox fallback
         }}>
-          {products.map((product) => {
+          {displayProducts.map((product, index) => {
             const p = localizeProduct(lang, product);
+            const prev = displayProducts[index - 1];
+            const bandBreak =
+              !isMobile &&
+              index > 0 &&
+              Boolean(prev?.modelGlb) &&
+              !product.modelGlb;
             return (
+            <React.Fragment key={product.id}>
+              {bandBreak && (
+                <div
+                  role="presentation"
+                  style={{
+                    gridColumn: '1 / -1',
+                    margin: '0.25rem 0 1rem',
+                    borderTop: '1px solid var(--clr-border)'
+                  }}
+                />
+              )}
             <div 
-              key={product.id} 
               className="card-hover" 
               style={{ 
                 cursor: 'pointer', 
@@ -349,17 +414,48 @@ export default function Products() {
               }}
               onClick={() => setActiveProduct(product)}
             >
-              {/* Product 3D Placeholder Area */}
+              {/* Product 3D area: GLB when available, else placeholder */}
               <div style={{ 
                 height: isMobile ? '160px' : '240px', 
-                background: 'linear-gradient(135deg, var(--clr-teal-light), var(--clr-bg-surface))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'
+                background: p.modelGlb ? '#0a3d45' : 'linear-gradient(135deg, var(--clr-teal-light), var(--clr-bg-surface))',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+                overflow: 'hidden'
               }}>
-                <div className="animate-float" style={{ color: 'var(--clr-teal-dark)' }}>
-                  <Box size={isMobile ? 40 : 80} strokeWidth={1} />
-                </div>
+                {p.modelGlb ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      height: '100%',
+                      padding: '0.75rem',
+                      pointerEvents: 'none',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Scan size={isMobile ? 38 : 56} strokeWidth={1.15} color="rgba(255,255,255,0.92)" />
+                    <span
+                      style={{
+                        fontSize: isMobile ? '0.68rem' : '0.78rem',
+                        fontWeight: 700,
+                        color: 'rgba(255,255,255,0.9)',
+                        letterSpacing: '0.04em',
+                        maxWidth: '12rem',
+                        lineHeight: 1.35
+                      }}
+                    >
+                      {t('prod.card3dTeaser')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="animate-float" style={{ color: 'var(--clr-teal-dark)' }}>
+                    <Box size={isMobile ? 40 : 80} strokeWidth={1} />
+                  </div>
+                )}
                 {!isMobile && (
-                  <div style={{ position: 'absolute', bottom: '12px', right: '12px', background: 'rgba(0,0,0,0.05)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 600, color: 'var(--clr-text-muted)' }}>
+                  <div style={{ position: 'absolute', bottom: '12px', right: '12px', background: p.modelGlb ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 600, color: p.modelGlb ? 'rgba(255,255,255,0.85)' : 'var(--clr-text-muted)' }}>
                     {t('prod.interact')}
                   </div>
                 )}
@@ -383,6 +479,7 @@ export default function Products() {
                 </div>
               </div>
             </div>
+            </React.Fragment>
             );
           })}
         </div>
@@ -402,25 +499,33 @@ export default function Products() {
             overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh'
           }} onClick={e => e.stopPropagation()}>
             
-            {/* Top: 3D Interactive Viewer Area */}
+            {/* Top: 3D viewer — GLB when product.modelGlb is set */}
             <div style={{ 
-              height: isMobile ? '220px' : '300px', background: 'linear-gradient(135deg, var(--clr-teal-dark), var(--clr-ocean))',
-              position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+              height: ap.modelGlb ? (isMobile ? 'min(52vh, 320px)' : 'min(48vh, 420px)') : (isMobile ? '220px' : '300px'),
+              minHeight: ap.modelGlb ? (isMobile ? 260 : 360) : undefined,
+              background: ap.modelGlb ? '#062a32' : 'linear-gradient(135deg, var(--clr-teal-dark), var(--clr-ocean))',
+              position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+              overflow: 'hidden'
             }}>
               <button 
                 onClick={() => setActiveProduct(null)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 2, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
               
-              <div style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(0,0,0,0.3)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+              <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 2, background: 'rgba(0,0,0,0.35)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
                 {t('prod.modal.rotate3d')}
               </div>
 
-              {/* Fake 3D Box for now */}
-              <div style={{ animation: 'float 6s infinite', transformStyle: 'preserve-3d', cursor: 'grab' }}>
-                <Box size={120} strokeWidth={0.5} />
-              </div>
+              {ap.modelGlb ? (
+                <div style={{ position: 'absolute', inset: 0, paddingTop: 8 }}>
+                  <ProductGlbViewer src={ap.modelGlb} alt={activeProduct.name} />
+                </div>
+              ) : (
+                <div style={{ animation: 'float 6s infinite', transformStyle: 'preserve-3d', cursor: 'grab' }}>
+                  <Box size={120} strokeWidth={0.5} />
+                </div>
+              )}
             </div>
 
             {/* Bottom: Clean Data */}

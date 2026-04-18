@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Stray GLB drops in repo root (canonical library: assets/glb/; public/models/*.glb are symlinks)
+/Confier Floc.glb
+/Confier Micromin.glb
+/CONFIER SOIL AFM.glb
+/CONFIER LIV.glb
+/CONFIER GUT PRO.glb
+/CONFIER K-PLUS _.glb

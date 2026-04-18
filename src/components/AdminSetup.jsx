@@ -23,7 +23,10 @@ export default function AdminSetup() {
       if (!supabase) throw new Error('Supabase not initialized');
 
       // Create admin user in Supabase
-      const { data, error: signUpError } = await supabase.auth.admin?.createUser({
+      if (!supabase.auth.admin) {
+        throw new Error('Admin API not available in this client configuration');
+      }
+      const { data, error: signUpError } = await supabase.auth.admin.createUser({
         email,
         password,
         email_confirm: true,

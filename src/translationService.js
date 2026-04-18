@@ -82,7 +82,7 @@ export const translateObject = (obj, targetLanguage = 'en') => {
 
   const translated = {};
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       translated[key] = translateObject(obj[key], targetLanguage);
     }
   }
