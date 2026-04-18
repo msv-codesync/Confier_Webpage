@@ -8,7 +8,9 @@ const isProd = process.env.NODE_ENV === 'production'
 export default defineConfig({
   build: {
     // Single main bundle is intentional for this SPA; avoids noisy CI/Vercel warnings.
-    chunkSizeWarningLimit: 700
+    chunkSizeWarningLimit: 700,
+    // Broader mobile WebView / Safari coverage than default `modules` baseline.
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']
   },
   plugins: [
     react(),

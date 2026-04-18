@@ -6,8 +6,9 @@ export default function TopDownPond() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
     let width = canvas.offsetWidth;
     let height = canvas.offsetHeight;
     const isMobile = width < 768;
@@ -59,7 +60,8 @@ export default function TopDownPond() {
       const grainCanvas = document.createElement('canvas');
       grainCanvas.width = Math.max(1, Math.floor(width));
       grainCanvas.height = Math.max(1, Math.floor(height));
-      const gctx = grainCanvas.getContext('2d');
+      const gctx = grainCanvas.getContext('2d', { alpha: true });
+      if (!gctx) return;
       const grainCount = mobile
         ? 40
         : Math.min(170, Math.max(85, Math.floor((width * height) / 10000)));

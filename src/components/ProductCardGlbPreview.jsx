@@ -1,6 +1,7 @@
-import React, { useRef, useState, useEffect, useCallback, startTransition } from 'react';
+import React, { useRef, useState, useEffect, useCallback, startTransition, lazy, Suspense } from 'react';
 import { Scan } from 'lucide-react';
-import ProductGlbViewer from './ProductGlbViewer.jsx';
+
+const ProductGlbViewer = lazy(() => import('./ProductGlbViewer.jsx'));
 
 /**
  * Mounts the real GLB only while the card is (near) visible so we do not exhaust WebGL contexts.
@@ -78,14 +79,46 @@ export default function ProductCardGlbPreview({ src, alt, isMobile, t, live = tr
   return (
     <div ref={wrapRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {active ? (
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <ProductGlbViewer
-            src={src}
-            alt={alt}
-            cameraOrbit="90deg 75deg 105%"
-            style={{ width: '100%', height: '100%' }}
-          />
-        </div>
+        <Suspense
+          fallback={
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem',
+                textAlign: 'center'
+              }}
+            >
+              <Scan size={isMobile ? 30 : 40} strokeWidth={1.1} color="rgba(255,255,255,0.55)" />
+              <span
+                style={{
+                  fontSize: isMobile ? '0.6rem' : '0.68rem',
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.5)',
+                  maxWidth: '11rem',
+                  lineHeight: 1.3
+                }}
+              >
+                {t('prod.card3dLoading')}
+              </span>
+            </div>
+          }
+        >
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+            <ProductGlbViewer
+              src={src}
+              alt={alt}
+              cameraOrbit="90deg 75deg 105%"
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
+        </Suspense>
       ) : (
         <div
           style={{

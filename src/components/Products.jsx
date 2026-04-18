@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Box, X, CheckCircle2, ShoppingCart, Heart } from 'lucide-react';
 import { useLanguage } from '../LanguageContext.jsx';
 import { useCart } from '../CartContext.jsx';
 import { localizeProduct } from '../data/productI18n.js';
-import ProductGlbViewer from './ProductGlbViewer.jsx';
 import ProductCardGlbPreview from './ProductCardGlbPreview.jsx';
+
+const ProductGlbViewer = lazy(() => import('./ProductGlbViewer.jsx'));
 
 export const products = [
   { 
@@ -500,7 +501,27 @@ export default function Products() {
 
               {ap.modelGlb ? (
                 <div style={{ position: 'absolute', inset: 0, paddingTop: 8 }}>
-                  <ProductGlbViewer src={ap.modelGlb} alt={activeProduct.name} />
+                  <Suspense
+                    fallback={
+                      <div
+                        style={{
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'rgba(255,255,255,0.75)',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          padding: '1rem'
+                        }}
+                      >
+                        {t('prod.card3dLoading')}
+                      </div>
+                    }
+                  >
+                    <ProductGlbViewer src={ap.modelGlb} alt={activeProduct.name} />
+                  </Suspense>
                 </div>
               ) : (
                 <div style={{ animation: 'float 6s infinite', transformStyle: 'preserve-3d', cursor: 'grab' }}>

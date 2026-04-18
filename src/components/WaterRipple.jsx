@@ -51,7 +51,7 @@ export default function WaterRipple() {
     window.addEventListener('pointerdown', onPointerDown, { passive: true });
     return () => {
       window.removeEventListener('pointerdown', onPointerDown);
-      root.replaceChildren();
+      while (root.firstChild) root.firstChild.remove();
     };
   }, []);
 
